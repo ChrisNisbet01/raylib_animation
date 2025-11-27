@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "animation1.h"
 
 int main(void)
 {
@@ -20,6 +21,7 @@ int main(void)
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
+            DrawRedSquareInMiddle();
 
             DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
 

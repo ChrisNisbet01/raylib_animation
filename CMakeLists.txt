@@ -17,7 +17,7 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(raylib)
 
 # Add the executable
-add_executable(raylib_hello_world src/main.c)
+add_executable(raylib_hello_world src/main.c src/animation1.c)
 
 # Link Raylib to the project. This also handles include directories.
 target_link_libraries(raylib_hello_world PRIVATE raylib)
