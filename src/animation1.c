@@ -2,6 +2,8 @@
 
 #include "easing_functions.h"
 
+#include <coroutine.h>
+
 #include <raylib.h>
 #include <raymath.h>
 
@@ -11,24 +13,15 @@
 
 struct AnimationContext
 {
+    struct schedule * schedule;
+    coroutine_t * co;
+
+    Environment const * env;
     float elapsed;
+    float resize_time;
     float max_size;
     float current_size;
 };
-
-static void
-update_context(AnimationContext * const ctx, Environment const * const env)
-{
-    if (ctx->elapsed < 1.f)
-    {
-        ctx->current_size = Lerp(0.f, ctx->max_size, ease_out_cubic(ctx->elapsed));
-    }
-    else
-    {
-        ctx->current_size = ctx->max_size;
-    }
-    ctx->elapsed += env->elapsed;
-}
 
 void
 animation1_free(AnimationContext * const ctx)
@@ -36,11 +29,40 @@ animation1_free(AnimationContext * const ctx)
     free(ctx);
 }
 
-void
-animation1_reset(AnimationContext * const ctx)
+static void
+animation1_reset_state(AnimationContext* const ctx)
 {
     ctx->elapsed = 0.f;
     ctx->current_size = 0.f;
+    ctx->resize_time = 2.f;
+}
+
+static void
+animation_coroutine(struct schedule * const s, void * const arg)
+{
+    AnimationContext * const ctx = arg;
+
+    animation1_reset_state(ctx);
+
+    while (ctx->elapsed < ctx->resize_time)
+    {
+        float const f = ctx->elapsed / ctx->resize_time;
+
+        ctx->current_size = Lerp(0.f, ctx->max_size, ease_out_cubic(f));
+        ctx->elapsed += ctx->env->delta;
+        coroutine_yield(s);
+    }
+    ctx->current_size = ctx->max_size;
+}
+
+void
+animation1_reset(AnimationContext * const ctx)
+{
+    if (!coroutine_is_active(ctx->co))
+    {
+        ctx->co = coroutine_new(ctx->schedule, animation_coroutine, ctx, 10000);
+    }
+    animation1_reset_state(ctx);
 }
 
 AnimationContext *
@@ -51,15 +73,24 @@ animation1_init(void)
     assert(ctx != NULL);
 
     ctx->max_size= 100;
+    ctx->schedule = coroutine_open();
+    assert(ctx->schedule != NULL);
+
+    animation1_reset(ctx);
+
+    return ctx;
 }
-/*
- * Draws a red square in the center of the screen.
- */
+
 void
 animation1_update(AnimationContext * const ctx, Environment const * const env)
 {
     assert(ctx != NULL);
-    update_context(ctx, env);
+    ctx->env = env;
+
+    if (coroutine_active_count(ctx->schedule) > 0)
+    {
+        coroutine_resume(ctx->schedule);
+    }
 
     int const screen_width = GetScreenWidth();
     int const screen_height = GetScreenHeight();

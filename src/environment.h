@@ -2,6 +2,6 @@
 
 typedef struct
 {
-	float const elapsed;
+    float const delta;
 } Environment;
 

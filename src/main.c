@@ -16,15 +16,20 @@ int main(void)
     while (!WindowShouldClose())
     {
         Environment const env = {
-            .elapsed = GetFrameTime(),
+            .delta = GetFrameTime(),
         };
+
+        if (IsKeyPressed(KEY_R))
+        {
+            animation1_reset(ctx);
+        }
 
         BeginDrawing();
 
             ClearBackground(RAYWHITE);
-            animation1_update(ctx, &env);
 
-            DrawText("Congrats! You created your first window!", 190, 200, 20, LIGHTGRAY);
+            //DrawText("Hello, World!", 190, 200, 20, LIGHTGRAY);
+            animation1_update(ctx, &env);
 
         EndDrawing();
     }
