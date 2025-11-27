@@ -19,7 +19,7 @@ FetchContent_MakeAvailable(raylib)
 # Define an imported target for the pre-built coroutine library
 add_library(coroutine STATIC IMPORTED)
 set_target_properties(coroutine PROPERTIES
-    IMPORTED_LOCATION "/home/chris/projects/coroutine/libcoroutine.a"
+    IMPORTED_LOCATION "/home/chris/projects/coroutine/build/libcoroutine.a"
     INTERFACE_INCLUDE_DIRECTORIES "/home/chris/projects/coroutine/include"
 )
 
