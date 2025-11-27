@@ -16,8 +16,12 @@ FetchContent_Declare(
 # This makes the dependency available, downloading and adding it to the build
 FetchContent_MakeAvailable(raylib)
 
-# Add the executable
-add_executable(raylib_hello_world src/main.c src/animation1.c)
+# Define an imported target for the pre-built coroutine library
+add_library(coroutine STATIC IMPORTED)
+set_target_properties(coroutine PROPERTIES
+    IMPORTED_LOCATION "/home/chris/projects/coroutine/libcoroutine.a"
+    INTERFACE_INCLUDE_DIRECTORIES "/home/chris/projects/coroutine/include"
+)
 
-# Link Raylib to the project. This also handles include directories.
-target_link_libraries(raylib_hello_world PRIVATE raylib)
+# Add the 'src' directory which now contains its own CMakeLists.txt
+add_subdirectory(src)
