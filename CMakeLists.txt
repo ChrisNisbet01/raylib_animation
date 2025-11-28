@@ -23,5 +23,12 @@ set_target_properties(coroutine PROPERTIES
     INTERFACE_INCLUDE_DIRECTORIES "/home/chris/projects/coroutine/include"
 )
 
+# Define an imported target for the pre-built easing_functions library
+add_library(easing_functions STATIC IMPORTED)
+set_target_properties(easing_functions PROPERTIES
+    IMPORTED_LOCATION "/home/chris/projects/easing_functions/build/libeasing_functions.a"
+    INTERFACE_INCLUDE_DIRECTORIES "/home/chris/projects/easing_functions/include"
+)
+
 # Add the 'src' directory which now contains its own CMakeLists.txt
 add_subdirectory(src)

@@ -170,8 +170,6 @@ animation_cleanup(void * const arg)
     square_animation_st * const ani = arg;
 
     (void)ani;
-
-    fprintf(stdout, "animation: cleanup\n");
 }
 
 static void
@@ -230,7 +228,7 @@ animation1_init(void)
     ctx->schedule = coroutine_open();
     assert(ctx->schedule != NULL);
 
-    ctx->sleep = 0.1f;
+    ctx->sleep = 0.2f;
 
     float const row_height = 200.f;
     float const pad = 10.f;
