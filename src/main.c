@@ -5,12 +5,13 @@
 int main(void)
 {
     int const screenWidth = 800;
-    int const screenHeight = 450;
-    AnimationContext * const ctx = animation1_init();
+    int const screenHeight = 600;
 
     InitWindow(screenWidth, screenHeight, "Animation");
 
     SetTargetFPS(60);
+
+    AnimationContext * const ctx = animation1_init();
 
     // Main game loop
     while (!WindowShouldClose())
