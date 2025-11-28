@@ -165,6 +165,16 @@ animation_coroutine(struct schedule * const s, void * const arg)
 }
 
 static void
+animation_cleanup(void * const arg)
+{
+    square_animation_st * const ani = arg;
+
+    (void)ani;
+
+    fprintf(stdout, "animation: cleanup\n");
+}
+
+static void
 update_animations(AnimationContext * const ctx)
 {
     if (coroutine_active_count(ctx->schedule) > 0)
@@ -184,8 +194,11 @@ animation1_reset(AnimationContext * const ctx)
         {
             coroutine_kill(ani->co);
         }
-
-        ani->co = coroutine_new(ani->ctx->schedule, animation_coroutine, ani, stack_size);
+        coroutine_handlers_t const handlers = {
+            .run = animation_coroutine,
+            .cleanup = animation_cleanup,
+        };
+        ani->co = coroutine_new(ani->ctx->schedule, &handlers, ani, stack_size);
 
         animation1_reset_state(ani);
     }
