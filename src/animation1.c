@@ -9,19 +9,29 @@
 #include <raymath.h>
 
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
-typedef struct square_animation_st
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
+#endif
+
+typedef struct square_animation_st square_animation_st;
+
+typedef void (*animation_draw_fn)(square_animation_st * const ani);
+
+struct square_animation_st
 {
     struct AnimationContext * ctx;
+    animation_draw_fn draw;
     coroutine_t * co;
     float max_size;
     float current_size;
     float current_angle;
     float pos_x;
     float pos_y;
-
-} square_animation_st;
+    Color color;
+};
 
 typedef struct square_animations_st {
     square_animation_st * * items;
@@ -36,6 +46,22 @@ struct AnimationContext
     Environment const * env;
     square_animations_st animations;
 };
+
+static size_t const stack_size = 10000;
+
+static void
+draw_square_animation(square_animation_st * const ani)
+{
+    float const square_size = ani->current_size;
+    float const origin_offset = square_size / 2.f;
+
+    DrawRectanglePro(
+        (Rectangle){ ani->pos_x, ani->pos_y, square_size, square_size },
+        (Vector2) { origin_offset, origin_offset },
+        ani->current_angle,
+        ani->color
+    );
+}
 
 void
 animation1_free(AnimationContext * const ctx)
@@ -156,10 +182,13 @@ animation1_reset(AnimationContext * const ctx)
     {
         square_animation_st * const ani = ctx->animations.items[i];
 
-        if (!coroutine_is_active(ani->co))
+        if (ani->co != NULL)
         {
-            ani->co = coroutine_new(ani->ctx->schedule, animation_coroutine, ani, 10000);
+            coroutine_kill(ani->co);
         }
+
+        ani->co = coroutine_new(ani->ctx->schedule, animation_coroutine, ani, stack_size);
+
         animation1_reset_state(ani);
     }
 }
@@ -168,28 +197,55 @@ AnimationContext *
 animation1_init(void)
 {
     AnimationContext * ctx = calloc(1, sizeof(*ctx));
+    float const screen_width = GetScreenWidth();
+    static Color const colors[] =
+    {
+        LIGHTGRAY,
+        GRAY,
+        DARKGRAY,
+        YELLOW,
+        GOLD,
+        ORANGE,
+        PINK,
+        RED,
+        MAROON,
+        GREEN,
+        LIME,
+        DARKGREEN,
+    };
 
     assert(ctx != NULL);
 
     ctx->schedule = coroutine_open();
     assert(ctx->schedule != NULL);
 
-    int const screen_width = GetScreenWidth();
-    int const screen_height = GetScreenHeight();
-    int const screen_center_x = screen_width / 2;
-    int const screen_center_y = screen_height / 2;
-    float const step = 100.f;
+    float const row_height = 200.f;
+    float const pad = 10.f;
+    float row_y = pad;
 
-    for (size_t i = 0; i < 4; i++)
+    for (size_t i = 0, j=0; i < 15; i++, j++)
     {
         square_animation_st * const ani = calloc(1, sizeof(*ani));
 
         assert(ani != NULL);
 
-        ani->pos_x = (screen_center_x - step) + (i * step);
-        ani->pos_y = (screen_center_y - step) + (i * step);
+        ani->max_size = 40.f + (i * i);
+
+        float const step = ani->max_size + 10.f;
+        float pos_x = (ani->max_size/ 2.f) + 10 + (j * step);
+
+        if (pos_x + ani->max_size >= GetScreenWidth())
+        {
+            row_y += row_height + pad;
+            j = 0;
+            pos_x = (ani->max_size/ 2.f) + 10 + (j * step);
+        }
+
+        ani->pos_x = (ani->max_size/ 2.f) + 10 + (j * step);
+        ani->pos_y = (ani->max_size/ 2.f) + row_y;
         ani->ctx = ctx;
-        ani->max_size = 100.f;
+        ani->draw = draw_square_animation;
+        ani->color = colors[(i % ARRAY_SIZE(colors))];
 
         da_append(&ctx->animations, ani);
     }
@@ -206,14 +262,7 @@ draw_animations(AnimationContext const * const ctx)
     {
         square_animation_st * const ani = ctx->animations.items[i];
 
-        int const square_size = ani->current_size;
-
-        DrawRectanglePro(
-            (Rectangle){ ani->pos_x, ani->pos_y, square_size, square_size },
-            (Vector2) { square_size / 2.f, square_size / 2.f },
-            ani->current_angle,
-            RED
-        );
+        ani->draw(ani);
     }
 }
 
