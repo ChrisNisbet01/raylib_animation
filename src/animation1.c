@@ -42,7 +42,7 @@ typedef struct square_animations_st {
 struct AnimationContext
 {
     struct schedule * schedule;
-
+    float sleep;
     Environment const * env;
     square_animations_st animations;
 };
@@ -152,13 +152,16 @@ animation_coroutine(struct schedule * const s, void * const arg)
 
     animation1_reset_state(ani);
 
-    expand_square(ani, 0.25f);
-    animation_sleep(ani, 0.25f);
-    rotate_square(ani, 45.f, 0.25f);
-    animation_sleep(ani, 0.25f);
-    rotate_square(ani, -45.f, 0.25f);
-    animation_sleep(ani, 0.25f);
-    shrink_square(ani, 0.25f);
+    AnimationContext const * const ctx = ani->ctx;
+    float const sleep = ctx->sleep;
+
+    expand_square(ani, sleep);
+    animation_sleep(ani, sleep);
+    rotate_square(ani, 45.f, sleep);
+    animation_sleep(ani, sleep);
+    rotate_square(ani, -45.f, sleep);
+    animation_sleep(ani, sleep);
+    shrink_square(ani, sleep);
 }
 
 static void
@@ -166,12 +169,7 @@ update_animations(AnimationContext * const ctx)
 {
     if (coroutine_active_count(ctx->schedule) > 0)
     {
-        for (size_t i = 0; i < ctx->animations.count; i++)
-        {
-            square_animation_st * const ani = ctx->animations.items[i];
-
-            coroutine_resume_co(ctx->schedule, ani->co);
-        }
+        coroutine_resume(ctx->schedule, coroutine_resume_all);
     }
 }
 
@@ -218,6 +216,8 @@ animation1_init(void)
 
     ctx->schedule = coroutine_open();
     assert(ctx->schedule != NULL);
+
+    ctx->sleep = 0.1f;
 
     float const row_height = 200.f;
     float const pad = 10.f;
