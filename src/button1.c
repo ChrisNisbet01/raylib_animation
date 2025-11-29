@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
 typedef struct button_st button_st;
 typedef struct button_state_st {
     bool was_pressed;
@@ -31,13 +32,12 @@ struct button_st
     button_config_st config;
 };
 
+typedef struct ButtonContext ButtonContext;
 struct ButtonContext
 {
     Environment const * env;
     button_st button;
 };
-
-static size_t const stack_size = 10000;
 
 static void
 draw_button(button_st const * const b)
@@ -47,15 +47,17 @@ draw_button(button_st const * const b)
     DrawRectangleRec(b->config.rec, color);
 }
 
-void
-button1_free(ButtonContext * const ctx)
+static void
+button1_free(void * const pv)
 {
+    ButtonContext * const ctx = pv;
     free(ctx);
 }
 
 static void
-button_update(ButtonContext * const ctx)
+button_update(void * const pv)
 {
+    ButtonContext * const ctx = pv;
     button_st * const b = &ctx->button;
 
     // Update
@@ -79,13 +81,31 @@ button_update(ButtonContext * const ctx)
     b->state.was_pressed = b->state.is_pressed;
 }
 
-void
-button1_reset(ButtonContext * const ctx)
+static void
+button1_reset(void * const pv)
 {
+    ButtonContext * const ctx = pv;
     ctx->button.state.was_pressed = false;
 }
 
-ButtonContext *
+static void
+button1_update(void * const pv, Environment const * const env)
+{
+    ButtonContext * const ctx = pv;
+    assert(ctx != NULL);
+    ctx->env = env;
+
+    button_update(ctx);
+}
+
+static void
+button1_draw(void const * const pv)
+{
+    ButtonContext const * const ctx = pv;
+    draw_button(&ctx->button);
+}
+
+void *
 button1_init(float const x, float const y, float const width, float const height)
 {
     ButtonContext * ctx = calloc(1, sizeof(*ctx));
@@ -100,18 +120,17 @@ button1_init(float const x, float const y, float const width, float const height
     return ctx;
 }
 
-void
-button1_update(ButtonContext * const ctx, Environment const * const env)
-{
-    assert(ctx != NULL);
-    ctx->env = env;
+static animation_handlers_st const
+button_handlers = {
+    .draw = button1_draw,
+    .free = button1_free,
+    .reset = button1_reset,
+    .update = button1_update,
+};
 
-    button_update(ctx);
-}
-
-void
-button1_draw(ButtonContext const * const ctx)
+animation_handlers_st const *
+get_button_animation_handlers(void)
 {
-    draw_button(&ctx->button);
+    return &button_handlers;
 }
 

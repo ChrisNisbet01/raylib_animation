@@ -14,14 +14,15 @@
 #include <stdlib.h>
 
 
+typedef struct AnimationContext AnimationContext;
 typedef struct square_animation_st square_animation_st;
 
-typedef void (*animation_draw_fn)(square_animation_st * const ani);
+typedef void (*square_draw_fn)(square_animation_st * const ani);
 
 struct square_animation_st
 {
     struct AnimationContext * ctx;
-    animation_draw_fn draw;
+    square_draw_fn draw;
     coroutine_t * co;
     float max_size;
     float current_size;
@@ -61,9 +62,10 @@ draw_square_animation(square_animation_st * const ani)
     );
 }
 
-void
-animation1_free(AnimationContext * const ctx)
+static void
+animation1_free(void * const pv)
 {
+    AnimationContext * const ctx = pv;
     square_animations_st * const animations = &ctx->animations;
 
     for (size_t i = 0; i < animations->count; i++)
@@ -171,17 +173,21 @@ animation_cleanup(void * const arg)
 }
 
 static void
-update_animations(AnimationContext * const ctx)
+update_animations(void * const pv)
 {
+    AnimationContext * const ctx = pv;
+
     if (coroutine_active_count(ctx->schedule) > 0)
     {
         coroutine_resume(ctx->schedule, coroutine_resume_all);
     }
 }
 
-void
-animation1_reset(AnimationContext * const ctx)
+static void
+animation1_reset(void * const pv)
 {
+    AnimationContext * const ctx = pv;
+
     for (size_t i = 0; i < ctx->animations.count; i++)
     {
         square_animation_st * const ani = ctx->animations.items[i];
@@ -200,7 +206,7 @@ animation1_reset(AnimationContext * const ctx)
     }
 }
 
-AnimationContext *
+void *
 animation1_init(void)
 {
     AnimationContext * ctx = calloc(1, sizeof(*ctx));
@@ -275,18 +281,34 @@ draw_animations(AnimationContext const * const ctx)
     }
 }
 
-void
-animation1_update(AnimationContext * const ctx, Environment const * const env)
+static void
+animation1_update(void * const pv, Environment const * const env)
 {
+    AnimationContext * const ctx = pv;
     assert(ctx != NULL);
     ctx->env = env;
 
     update_animations(ctx);
 }
 
-void
-animation1_draw(AnimationContext const * const ctx)
+static void
+animation1_draw(void const * const pv)
 {
+    AnimationContext const * const ctx = pv;
     draw_animations(ctx);
+}
+
+static animation_handlers_st const
+animation1_handlers = {
+    .draw = animation1_draw,
+    .free = animation1_free,
+    .reset = animation1_reset,
+    .update = animation1_update,
+};
+
+animation_handlers_st const *
+get_animation1_animation_handlers(void)
+{
+    return &animation1_handlers;
 }
 
