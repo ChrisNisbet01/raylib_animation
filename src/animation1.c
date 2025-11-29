@@ -82,65 +82,77 @@ animation1_reset_state(square_animation_st * const ani)
     ani->current_angle = 0.f;
 }
 
+static float
+update_fraction_complete(float const current_fraction, float const delta_time, float const total_time)
+{
+    float fraction_complete = current_fraction + delta_time / total_time;
+
+    if (fraction_complete > 1.f)
+    {
+        fraction_complete = 1.f;
+    }
+
+    return fraction_complete;
+}
+
 static void expand_square(square_animation_st * const ani, float const resize_time)
 {
     AnimationContext * const ctx = ani->ctx;
-    float elapsed = 0;
+    float fraction_complete = 0.f;
 
-    while (elapsed < resize_time)
+    while (fraction_complete < 1.f)
     {
-        float const f = elapsed / resize_time;
+        fraction_complete = update_fraction_complete(
+            fraction_complete, ctx->env->delta, resize_time);
 
-        ani->current_size = Lerp(0.f, ani->max_size, ease_out_cubic(f));
-        elapsed += ctx->env->delta;
+        ani->current_size = Lerp(0.f, ani->max_size, ease_out_cubic(fraction_complete));
         coroutine_yield(ctx->schedule);
     }
-    ani->current_size = ani->max_size;
 }
 
 static void shrink_square(square_animation_st * const ani, float const resize_time)
 {
     AnimationContext * const ctx = ani->ctx;
-    float elapsed = 0;
+    float fraction_complete = 0.f;
 
-    while (elapsed < resize_time)
+    while (fraction_complete < 1.f)
     {
-        float const f = elapsed / resize_time;
+        fraction_complete = update_fraction_complete(
+            fraction_complete, ctx->env->delta, resize_time);
 
-        ani->current_size = Lerp(ani->max_size, 0, ease_out_cubic(f));
-        elapsed += ctx->env->delta;
+        ani->current_size = Lerp(ani->max_size, 0.f, ease_out_cubic(fraction_complete));
         coroutine_yield(ctx->schedule);
     }
-    ani->current_size = 0;
 }
 
 static void
 rotate_square(square_animation_st * const ani, float const angle_degrees, float const rotate_time)
 {
     AnimationContext * const ctx = ani->ctx;
-    float elapsed = 0;
     float current_angle = 0;
     float start_angle = ani->current_angle;
+    float fraction_complete = 0.f;
 
-    while (elapsed < rotate_time)
+    while (fraction_complete < 1.f)
     {
-        float const f = elapsed / rotate_time;
+        fraction_complete = update_fraction_complete(
+            fraction_complete, ctx->env->delta, rotate_time);
 
-        ani->current_angle = start_angle + Lerp(0.f, angle_degrees, ease_out_cubic(f));
-        elapsed += ctx->env->delta;
+        ani->current_angle = start_angle + Lerp(0.f, angle_degrees, ease_out_cubic(fraction_complete));
         coroutine_yield(ctx->schedule);
     }
-    ani->current_angle = start_angle + angle_degrees;
 }
 
 static void animation_sleep(square_animation_st * const ani, float const sleep_time)
 {
     AnimationContext * const ctx = ani->ctx;
-    float elapsed = 0;
+    float fraction_complete = 0.f;
 
-    while (elapsed < sleep_time)
+    while (fraction_complete < 1.f)
     {
-        elapsed += ctx->env->delta;
+        fraction_complete = update_fraction_complete(
+            fraction_complete, ctx->env->delta, sleep_time);
+
         coroutine_yield(ctx->schedule);
     }
 }
@@ -157,7 +169,7 @@ animation_coroutine(struct schedule * const s, void * const arg)
 
     expand_square(ani, sleep);
     animation_sleep(ani, sleep);
-    rotate_square(ani, 45.f, sleep);
+    rotate_square(ani, 720.f + 45.f, sleep * 5);
     animation_sleep(ani, sleep);
     rotate_square(ani, -45.f, sleep);
     animation_sleep(ani, sleep);
