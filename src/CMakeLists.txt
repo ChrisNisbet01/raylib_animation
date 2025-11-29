@@ -3,6 +3,7 @@
 add_executable(raylib_hello_world 
   main.c 
   animation1.c
+  button1.c
 )
 
 # Link the executable against the raylib and coroutine libraries.

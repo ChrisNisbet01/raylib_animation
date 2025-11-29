@@ -2,6 +2,7 @@
 
 #include "dynamic_array.h"
 #include "easing_functions.h"
+#include "utils.h"
 
 #include <coroutine.h>
 
@@ -12,9 +13,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#ifndef ARRAY_SIZE
-#define ARRAY_SIZE(a) (sizeof(a)/sizeof((a)[0]))
-#endif
 
 typedef struct square_animation_st square_animation_st;
 
@@ -284,6 +282,11 @@ animation1_update(AnimationContext * const ctx, Environment const * const env)
     ctx->env = env;
 
     update_animations(ctx);
+}
+
+void
+animation1_draw(AnimationContext const * const ctx)
+{
     draw_animations(ctx);
 }
 
