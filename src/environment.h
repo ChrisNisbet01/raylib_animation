@@ -2,6 +2,11 @@
 
 typedef struct
 {
-    float const delta;
+    float value;
+} DeltaTime;
+
+typedef struct
+{
+    DeltaTime const delta;
 } Environment;
 

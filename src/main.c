@@ -30,7 +30,7 @@ int main(void)
     while (!WindowShouldClose())
     {
         Environment const env = {
-            .delta = GetFrameTime(),
+            .delta = {GetFrameTime()},
         };
 
         if (IsKeyPressed(KEY_R))

@@ -5,6 +5,8 @@ find_package(OpenGL REQUIRED)
 
 set(CMAKE_C_STANDARD 99)
 
+add_compile_options(-Wall -Wextra)
+
 # Use FetchContent to download and build raylib from source
 include(FetchContent)
 FetchContent_Declare(
